@@ -46,9 +46,9 @@ export function useShotlist(projectId?: string) {
         setLoading(true)
         setError(null)
 
-        // Query the edl_generation_job table
+        // Query the edl_generation_jobs table (corrected from edl_generation_job)
         const query = supabase
-          .from('edl_generation_job')
+          .from('edl_generation_jobs')
           .select('*')
           .order('created_at', { ascending: false })
         
