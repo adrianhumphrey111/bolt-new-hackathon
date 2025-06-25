@@ -10,7 +10,7 @@ export interface ShotlistItem {
   precise_timing: {
     end: number
     start: number
-    duration:so  number
+    duration: number
   }
   script_segment: string
   content_preview: string
@@ -23,7 +23,7 @@ export interface EdlGenerationJob {
   status: string
   created_at: string
   updated_at: string
-  shotlist: ShotlistItem[]
+  shot_list: ShotlistItem[]
   user_id: string
 }
 
@@ -73,10 +73,10 @@ export function useShotlist(projectId?: string) {
 
         const job = data[0] as EdlGenerationJob
         
-        // Check if shotlist exists and is an array
-        if (job.shotlist && Array.isArray(job.shotlist)) {
-          console.log(`Found shotlist with ${job.shotlist.length} shots`)
-          setShotlist(job.shotlist)
+        // Check if shot_list exists and is an array
+        if (job.shot_list && Array.isArray(job.shot_list)) {
+          console.log(`Found shotlist with ${job.shot_list.length} shots`)
+          setShotlist(job.shot_list)
         } else {
           console.log('Shotlist is empty or not in expected format')
           setShotlist([])

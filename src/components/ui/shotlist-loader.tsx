@@ -47,10 +47,6 @@ export function ShotlistLoader({ projectId, onComplete }: ShotlistLoaderProps) {
       // Dispatch event to add multiple videos atomically
       dispatch(EDITOR_ADD_MULTIPLE_VIDEOS, {
         payload: timelineItems,
-        options: {
-          resourceId: "main",
-          scaleMode: "fit",
-        },
       });
       
       setSuccess(true);
