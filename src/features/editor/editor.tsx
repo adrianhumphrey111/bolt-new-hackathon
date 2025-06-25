@@ -92,8 +92,8 @@ const Editor = () => {
         duration: duration,
         details: {
           src: convertS3UrlToHttps(video.s3_location),
-          width: 1920,
-          height: 1080,
+          width: 1080,
+          height: 1920,
           volume: 1,
         },
         metadata: {
@@ -225,8 +225,8 @@ const Editor = () => {
         type: "video",
         details: {
           src: convertS3UrlToHttps(video.s3_location),
-          width: 1920,
-          height: 1080,
+          width: 1080,
+          height: 1920,
           volume: 1,
         },
         metadata: {

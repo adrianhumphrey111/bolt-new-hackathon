@@ -153,6 +153,9 @@ export const Videos = () => {
               id: generateId(),
               details: {
                 src: signedUrl,
+                width: 1080, // Default width for proper scaling
+                height: 1920, // Default height for proper scaling
+                volume: 1,
               },
               type: "video",
               metadata: {

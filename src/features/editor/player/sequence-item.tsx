@@ -122,9 +122,22 @@ export const SequenceItem: Record<
     const crop = details.crop || {
       x: 0,
       y: 0,
-      width: item.details.width,
-      height: item.details.height,
+      width: item.details.width || 1080,
+      height: item.details.height || 1920,
     };
+
+    // Calculate container styles with proper centering
+    const containerStyles = calculateContainerStyles(details, crop, {
+      overflow: "hidden",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      width: "100%",
+      height: "100%",
+      position: "absolute",
+      top: 0,
+      left: 0,
+    });
 
     return (
       <Sequence
@@ -136,24 +149,44 @@ export const SequenceItem: Record<
         <AbsoluteFill
           data-track-item="transition-element"
           className={`designcombo-scene-item id-${item.id} designcombo-scene-item-type-${item.type}`}
-          style={calculateContainerStyles(details, crop)}
+          style={containerStyles}
         >
           {/* animation layer */}
           <Animated
-            style={calculateContainerStyles(details, crop, {
+            style={{
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               overflow: "hidden",
-            })}
+            }}
             animationIn={animationIn}
             animationOut={animationOut}
             durationInFrames={durationInFrames}
           >
-            <div style={calculateMediaStyles(details, crop)}>
+            <div 
+              style={{
+                width: "100%",
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
               <OffthreadVideo
                 startFrom={(item.trim?.from! / 1000) * fps}
                 endAt={(item.trim?.to! / 1000) * fps}
                 playbackRate={playbackRate}
                 src={details.src}
                 volume={details.volume || 0 / 100}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                }}
               />
             </div>
           </Animated>

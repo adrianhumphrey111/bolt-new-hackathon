@@ -148,9 +148,12 @@ export const loadShotlistToTimeline = async (
         duration: durationMs, // How long this clip plays on timeline
         details: {
           src: videoUrl,
-          width: 1920,
-          height: 1080,
+          width: 1080, // Set default width for proper scaling
+          height: 1920, // Set default height for proper scaling
           volume: 1,
+          // Center the video in the frame
+          left: 0,
+          top: 0,
         },
         metadata: {
           previewUrl: videoUrl,
