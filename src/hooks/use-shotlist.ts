@@ -10,7 +10,7 @@ export interface ShotlistItem {
   precise_timing: {
     end: number
     start: number
-    duration: number
+    duration:so  number
   }
   script_segment: string
   content_preview: string
