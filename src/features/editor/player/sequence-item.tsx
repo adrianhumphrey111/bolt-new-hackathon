@@ -178,7 +178,11 @@ export const SequenceItem: Record<
             >
               <OffthreadVideo
                 startFrom={(item.trim?.from! / 1000) * fps}
+                )
+                }
                 endAt={(item.trim?.to! / 1000) * fps}
+                )
+                }
                 playbackRate={playbackRate}
                 src={details.src}
                 volume={details.volume || 0 / 100}
@@ -219,10 +223,15 @@ export const SequenceItem: Record<
         <AbsoluteFill>
           <Audio
             startFrom={(item.trim?.from! / 1000) * fps}
+            )
+            }
             endAt={(item.trim?.to! / 1000) * fps}
+            )
+            }
             playbackRate={playbackRate}
             src={details.src}
             volume={details.volume! / 100}
+            }
           />
         </AbsoluteFill>
       </Sequence>
