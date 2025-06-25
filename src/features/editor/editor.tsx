@@ -25,7 +25,7 @@ import { useUserVideos } from "@/hooks/use-user-videos";
 import { useAuth } from "@/hooks/use-auth";
 import { useShotlist } from "@/hooks/use-shotlist";
 import { transformShotlistToTimelineItems } from "@/utils/shotlist-transformer";
-import { dispatch, listen } from "@designcombo/events";
+import { dispatch, subject, filter } from "@designcombo/events";
 import { EDITOR_ADD_MULTIPLE_VIDEOS } from "./constants/events";
 
 const stateManager = new StateManager({
@@ -133,16 +133,18 @@ const Editor = () => {
     }
   };
 
-  // Listen for the add multiple videos event
+  // Listen for the add multiple videos event using subject and filter
   useEffect(() => {
-    const unsubscribe = listen(EDITOR_ADD_MULTIPLE_VIDEOS, (event: any) => {
-      const { payload } = event;
-      if (payload && Array.isArray(payload)) {
-        addVideosWithAtomicUpdate(payload);
-      }
-    });
+    const subscription = subject
+      .pipe(filter((event: any) => event.type === EDITOR_ADD_MULTIPLE_VIDEOS))
+      .subscribe((event: any) => {
+        const { payload } = event;
+        if (payload && Array.isArray(payload)) {
+          addVideosWithAtomicUpdate(payload);
+        }
+      });
 
-    return unsubscribe;
+    return () => subscription.unsubscribe();
   }, [timeline, stateManager]);
 
   // Auto-load shotlist when conditions are met
