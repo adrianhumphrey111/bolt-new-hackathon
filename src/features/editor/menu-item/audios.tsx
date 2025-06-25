@@ -26,7 +26,7 @@ export const Audios = () => {
         Audios
       </div>
       <ScrollArea className="h-[calc(100vh-58px-48px)]">
-        <div className="flex flex-col px-2">
+        <div className="flex flex-col px-2 pb-20">
           {AUDIOS.map((audio, index) => {
             return (
               <AudioItem

@@ -1,12 +1,12 @@
+import Draggable from "@/components/shared/draggable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { IMAGES } from "../data/images";
 import { dispatch } from "@designcombo/events";
+import { ADD_ITEMS } from "@designcombo/state";
 import { generateId } from "@designcombo/timeline";
-import Draggable from "@/components/shared/draggable";
 import { IImage } from "@designcombo/types";
 import React from "react";
 import { useIsDraggingOverTimeline } from "../hooks/is-dragging-over-timeline";
-import { ADD_ITEMS } from "@designcombo/state";
 
 export const Images = () => {
   const isDraggingOverTimeline = useIsDraggingOverTimeline();
@@ -24,7 +24,7 @@ export const Images = () => {
               to: 5000,
             },
             details: {
-              src: payload.details?.src,
+              src: payload.details!.src,
             },
             metadata: {},
           },
@@ -39,7 +39,7 @@ export const Images = () => {
         Photos
       </div>
       <ScrollArea className="h-[calc(100vh-58px-48px)]">
-        <div className="grid grid-cols-2 gap-2 px-4">
+        <div className="grid grid-cols-2 gap-3 p-4 pb-20">
           {IMAGES.map((image, index) => {
             return (
               <ImageItem
@@ -90,7 +90,7 @@ const ImageItem = ({
             },
           } as IImage)
         }
-        className="flex w-full items-center justify-center overflow-hidden bg-background pb-2 cursor-pointer"
+        className="flex w-full cursor-pointer items-center justify-center overflow-hidden bg-background pb-2"
       >
         <img
           draggable={false}
