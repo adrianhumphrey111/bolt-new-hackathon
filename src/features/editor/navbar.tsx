@@ -23,6 +23,7 @@ import { useDownloadState } from "./store/use-download-state";
 import DownloadProgressModal from "./download-progress-modal";
 import AutosizeInput from "@/components/ui/autosize-input";
 import { debounce } from "lodash";
+import { ShotlistLoader } from "@/components/ui/shotlist-loader";
 
 export default function Navbar({
   stateManager,
@@ -130,6 +131,9 @@ export default function Navbar({
             width={200}
             inputClassName="border-none outline-none px-1 bg-background text-sm font-medium text-zinc-200"
           />
+        </div>
+        <div className="pointer-events-auto">
+          <ShotlistLoader />
         </div>
       </div>
 
