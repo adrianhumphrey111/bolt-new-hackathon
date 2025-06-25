@@ -24,18 +24,25 @@ import DownloadProgressModal from "./download-progress-modal";
 import AutosizeInput from "@/components/ui/autosize-input";
 import { debounce } from "lodash";
 import { ShotlistLoader } from "@/components/ui/shotlist-loader";
+import { useAuth } from "@/hooks/use-auth";
+import { createClient } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 export default function Navbar({
   stateManager,
   setProjectName,
   projectName,
+  user,
 }: {
-  user: null;
+  user: any;
   stateManager: StateManager;
   setProjectName: (name: string) => void;
   projectName: string;
 }) {
   const [title, setTitle] = useState(projectName);
+  const { loading } = useAuth();
+  const router = useRouter();
+  const supabase = createClient();
 
   const handleUndo = () => {
     dispatch(HISTORY_UNDO);
@@ -63,6 +70,11 @@ export default function Navbar({
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value);
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/auth/login');
   };
 
   return (
@@ -98,6 +110,12 @@ export default function Navbar({
                 className="cursor-pointer text-muted-foreground"
               >
                 Duplicate project
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleSignOut}
+                className="cursor-pointer text-destructive"
+              >
+                Sign Out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

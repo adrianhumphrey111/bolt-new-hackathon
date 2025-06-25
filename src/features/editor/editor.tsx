@@ -27,6 +27,7 @@ import { dispatch, subject, filter } from "@designcombo/events";
 import { EDITOR_ADD_MULTIPLE_VIDEOS } from "./constants/events";
 import { ADD_VIDEO } from "@designcombo/state";
 import { generateId } from "@designcombo/timeline";
+import { useRouter } from "next/navigation";
 
 const stateManager = new StateManager({
   size: {
@@ -39,9 +40,17 @@ const Editor = () => {
   const [projectName, setProjectName] = useState<string>("Untitled video");
   const timelinePanelRef = useRef<ImperativePanelHandle>(null);
   const { timeline, playerRef } = useStore();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { videos } = useUserVideos();
   const [shotlistLoaded, setShotlistLoaded] = useState(false);
+  const router = useRouter();
+
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/auth/login');
+    }
+  }, [user, loading, router]);
 
   // Function to add videos using direct StateManager.updateState (ATOMIC - LIMITED INTERACTIVITY)
   const addVideosWithAtomicUpdate = async (videos: any[]) => {
@@ -260,11 +269,24 @@ const Editor = () => {
     return () => window.removeEventListener("resize", onResize);
   }, [timeline]);
 
+  // If loading or not logged in, show loading or nothing
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Will redirect in useEffect
+  }
+
   return (
     <div className="flex h-screen w-screen flex-col">
       <Navbar
         projectName={projectName}
-        user={null}
+        user={user}
         stateManager={stateManager}
         setProjectName={setProjectName}
       />
