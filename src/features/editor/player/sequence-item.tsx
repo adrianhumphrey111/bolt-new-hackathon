@@ -177,15 +177,11 @@ export const SequenceItem: Record<
               }}
             >
               <OffthreadVideo
-                startFrom={(item.trim?.from! / 1000) * fps}
-                )
-                }
-                endAt={(item.trim?.to! / 1000) * fps}
-                )
-                }
+                startFrom={(item.trim?.from || 0) / 1000 * fps}
+                endAt={(item.trim?.to || item.duration) / 1000 * fps}
                 playbackRate={playbackRate}
                 src={details.src}
-                volume={details.volume || 0 / 100}
+                volume={(details.volume || 0) / 100}
                 style={{
                   width: "100%",
                   height: "100%",
@@ -222,16 +218,11 @@ export const SequenceItem: Record<
       >
         <AbsoluteFill>
           <Audio
-            startFrom={(item.trim?.from! / 1000) * fps}
-            )
-            }
-            endAt={(item.trim?.to! / 1000) * fps}
-            )
-            }
+            startFrom={(item.trim?.from || 0) / 1000 * fps}
+            endAt={(item.trim?.to || item.duration) / 1000 * fps}
             playbackRate={playbackRate}
             src={details.src}
-            volume={details.volume! / 100}
-            }
+            volume={(details.volume || 0) / 100}
           />
         </AbsoluteFill>
       </Sequence>
