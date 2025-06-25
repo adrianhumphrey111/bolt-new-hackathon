@@ -3,7 +3,7 @@ import { useShotlist } from "@/hooks/use-shotlist";
 import { useUserVideos } from "@/hooks/use-user-videos";
 import { transformShotlistToTimelineItems } from "@/utils/shotlist-transformer";
 import { dispatch } from "@designcombo/events";
-import { ADD_VIDEO, CLEAR_TIMELINE } from "@designcombo/state";
+import { EDITOR_ADD_MULTIPLE_VIDEOS } from "@/features/editor/constants/events";
 import { useState } from "react";
 
 interface ShotlistLoaderProps {
@@ -34,9 +34,6 @@ export function ShotlistLoader({ projectId, onComplete }: ShotlistLoaderProps) {
         return;
       }
       
-      // Clear timeline first
-      dispatch(CLEAR_TIMELINE, {});
-      
       // Transform shotlist to timeline items
       const timelineItems = transformShotlistToTimelineItems(shotlist, videos);
       
@@ -47,19 +44,14 @@ export function ShotlistLoader({ projectId, onComplete }: ShotlistLoaderProps) {
       
       console.log(`Loading ${timelineItems.length} shots to timeline`);
       
-      // Add each video to the timeline
-      for (const item of timelineItems) {
-        dispatch(ADD_VIDEO, {
-          payload: item,
-          options: {
-            resourceId: "main",
-            scaleMode: "fit",
-          },
-        });
-        
-        // Small delay to prevent overwhelming the event system
-        await new Promise(resolve => setTimeout(resolve, 50));
-      }
+      // Dispatch event to add multiple videos atomically
+      dispatch(EDITOR_ADD_MULTIPLE_VIDEOS, {
+        payload: timelineItems,
+        options: {
+          resourceId: "main",
+          scaleMode: "fit",
+        },
+      });
       
       setSuccess(true);
       onComplete?.();

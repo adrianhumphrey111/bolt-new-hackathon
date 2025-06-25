@@ -25,8 +25,8 @@ import { useUserVideos } from "@/hooks/use-user-videos";
 import { useAuth } from "@/hooks/use-auth";
 import { useShotlist } from "@/hooks/use-shotlist";
 import { transformShotlistToTimelineItems } from "@/utils/shotlist-transformer";
-import { dispatch } from "@designcombo/events";
-import { ADD_VIDEO, CLEAR_TIMELINE } from "@designcombo/state";
+import { dispatch, listen } from "@designcombo/events";
+import { EDITOR_ADD_MULTIPLE_VIDEOS } from "./constants/events";
 
 const stateManager = new StateManager({
   size: {
@@ -90,6 +90,61 @@ const Editor = () => {
     return () => window.removeEventListener("resize", onResize);
   }, [timeline]);
 
+  // Function to add multiple videos atomically
+  const addVideosWithAtomicUpdate = async (timelineItems: any[]) => {
+    if (!timeline || !stateManager) return;
+
+    try {
+      console.log(`Adding ${timelineItems.length} videos to timeline atomically`);
+      
+      // Clear timeline first by updating state atomically
+      stateManager.updateState({
+        timeline: {
+          ...stateManager.getState().timeline,
+          tracks: stateManager.getState().timeline.tracks.map((track: any) => ({
+            ...track,
+            items: [],
+          })),
+        },
+      });
+
+      // Add all videos in a single atomic update
+      const currentState = stateManager.getState();
+      const updatedTracks = [...currentState.timeline.tracks];
+      
+      // Assuming we want to add to the first track (main track)
+      if (updatedTracks.length > 0) {
+        updatedTracks[0] = {
+          ...updatedTracks[0],
+          items: timelineItems,
+        };
+      }
+
+      stateManager.updateState({
+        timeline: {
+          ...currentState.timeline,
+          tracks: updatedTracks,
+        },
+      });
+
+      console.log('Videos added successfully via atomic update');
+    } catch (error) {
+      console.error('Error adding videos atomically:', error);
+    }
+  };
+
+  // Listen for the add multiple videos event
+  useEffect(() => {
+    const unsubscribe = listen(EDITOR_ADD_MULTIPLE_VIDEOS, (event: any) => {
+      const { payload } = event;
+      if (payload && Array.isArray(payload)) {
+        addVideosWithAtomicUpdate(payload);
+      }
+    });
+
+    return unsubscribe;
+  }, [timeline, stateManager]);
+
   // Auto-load shotlist when conditions are met
   useEffect(() => {
     const loadShotlistToTimeline = async () => {
@@ -100,9 +155,6 @@ const Editor = () => {
       try {
         console.log(`Loading shotlist with ${shotlist.length} shots and ${videos.length} videos`);
         
-        // Clear timeline first
-        dispatch(CLEAR_TIMELINE, {});
-        
         // Transform shotlist to timeline items
         const timelineItems = transformShotlistToTimelineItems(shotlist, videos);
         
@@ -111,24 +163,19 @@ const Editor = () => {
           return;
         }
         
-        console.log(`Adding ${timelineItems.length} videos to timeline`);
+        console.log(`Dispatching event to add ${timelineItems.length} videos to timeline`);
         
-        // Add each video to the timeline with a small delay to prevent overwhelming the event system
-        for (const item of timelineItems) {
-          dispatch(ADD_VIDEO, {
-            payload: item,
-            options: {
-              resourceId: "main",
-              scaleMode: "fit",
-            },
-          });
-          
-          // Small delay between each dispatch
-          await new Promise(resolve => setTimeout(resolve, 50));
-        }
+        // Dispatch event to add multiple videos atomically
+        dispatch(EDITOR_ADD_MULTIPLE_VIDEOS, {
+          payload: timelineItems,
+          options: {
+            resourceId: "main",
+            scaleMode: "fit",
+          },
+        });
         
         setShotlistLoaded(true);
-        console.log('Shotlist loaded successfully');
+        console.log('Shotlist load event dispatched successfully');
       } catch (error) {
         console.error('Error loading shotlist:', error);
       }
