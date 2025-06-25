@@ -20,11 +20,23 @@ function Shadow({
   value: IBoxShadow;
   onChange: (v: IBoxShadow) => void;
 }) {
-  const [localValue, setLocalValue] = useState<IBoxShadow>(value);
+  const [localValue, setLocalValue] = useState<IBoxShadow>({
+    color: value?.color || "#000000",
+    x: value?.x || 0,
+    y: value?.y || 0,
+    blur: value?.blur || 0,
+    ...value
+  });
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    setLocalValue(value);
+    setLocalValue({
+      color: value?.color || "#000000",
+      x: value?.x || 0,
+      y: value?.y || 0,
+      blur: value?.blur || 0,
+      ...value
+    });
   }, [value]);
 
   return (

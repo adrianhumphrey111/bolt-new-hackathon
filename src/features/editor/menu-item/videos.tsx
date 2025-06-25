@@ -27,7 +27,13 @@ export const Videos = () => {
     });
   };
 
-  const convertS3UrlToHttps = (s3Location: string): string => {
+  const convertS3UrlToHttps = (s3Location: string | null | undefined): string => {
+    // Handle null/undefined values
+    if (!s3Location) {
+      console.warn('s3Location is null or undefined');
+      return '';
+    }
+    
     // Convert s3://bucket/key to https://bucket.s3.region.amazonaws.com/key
     if (s3Location.startsWith('s3://')) {
       const s3Match = s3Location.match(/^s3:\/\/([^\/]+)\/(.+)$/);
