@@ -20,14 +20,18 @@ function useZoom(
     const containerWidth = container.clientWidth - PADDING;
     const { width, height } = size;
 
-    viewerRef.current?.infiniteViewer.scrollCenter();
+    // Check if viewerRef and its infiniteViewer are properly initialized
+    if (viewerRef.current?.infiniteViewer) {
+      viewerRef.current.infiniteViewer.scrollCenter();
+    }
+    
     const desiredZoom = Math.min(
       containerWidth / width,
       containerHeight / height,
     );
     currentZoomRef.current = desiredZoom;
     setZoom(desiredZoom);
-  }, [size, containerRef]);
+  }, [size, containerRef, viewerRef]);
 
   const handlePinch = useCallback((e: OnPinch) => {
     const deltaY = (e as any).inputEvent.deltaY;

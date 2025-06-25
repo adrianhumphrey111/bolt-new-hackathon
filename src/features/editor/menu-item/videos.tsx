@@ -145,8 +145,8 @@ export const Videos = () => {
       <div className="text-text-primary flex h-12 flex-none items-center px-4 text-sm font-medium">
         Your Videos ({videos.length})
       </div>
-      <ScrollArea>
-        <div className="masonry-sm px-4">
+      <ScrollArea className="h-[calc(100vh-58px-48px)]">
+        <div className="grid grid-cols-2 gap-3 p-4 pb-20">
           {videos.map((video) => {
             const signedUrl = videoUrls[video.id] || video.s3_location;
             const videoData: Partial<IVideo> = {
@@ -210,7 +210,7 @@ const UserVideoItem = ({
   );
 
   return (
-    <div className="pb-2">
+    <div className="mb-2">
       <Draggable
         data={{
           ...video,
@@ -231,11 +231,11 @@ const UserVideoItem = ({
               <img
                 src={userVideo.thumbnail_url}
                 alt={userVideo.original_name}
-                className="h-20 w-full rounded-md object-cover"
+                className="h-24 w-full rounded-md object-cover"
               />
             ) : (
               <video
-                className="h-20 w-full rounded-md object-cover"
+                className="h-24 w-full rounded-md object-cover"
                 muted
                 preload="metadata"
                 onLoadedMetadata={(e) => {

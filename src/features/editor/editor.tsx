@@ -21,12 +21,13 @@ import CropModal from "./crop-modal/crop-modal";
 import useDataState from "./store/use-data-state";
 import { FONTS } from "./data/fonts";
 import FloatingControl from "./control-item/floating-controls/floating-control";
-import { loadShotlistToTimeline, testShotlist } from "./utils/load-shotlist";
 import { useUserVideos } from "@/hooks/use-user-videos";
 import { useAuth } from "@/hooks/use-auth";
-import { dispatch } from "@designcombo/events";
+import { dispatch, subject, filter } from "@designcombo/events";
+import { EDITOR_ADD_MULTIPLE_VIDEOS } from "./constants/events";
 import { ADD_VIDEO } from "@designcombo/state";
 import { generateId } from "@designcombo/timeline";
+import { useRouter } from "next/navigation";
 
 const stateManager = new StateManager({
   size: {
@@ -39,14 +40,21 @@ const Editor = () => {
   const [projectName, setProjectName] = useState<string>("Untitled video");
   const timelinePanelRef = useRef<ImperativePanelHandle>(null);
   const { timeline, playerRef } = useStore();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { videos } = useUserVideos();
   const [shotlistLoaded, setShotlistLoaded] = useState(false);
+  const router = useRouter();
 
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/auth/login');
+    }
+  }, [user, loading, router]);
 
   // Function to add videos using direct StateManager.updateState (ATOMIC - LIMITED INTERACTIVITY)
   const addVideosWithAtomicUpdate = async (videos: any[]) => {
-    console.log('Adding videos with atomic state update');
+    console.log('Adding videos with atomic update');
     
     // Wait for timeline to be ready before adding videos
     if (timeline) {
@@ -183,111 +191,29 @@ const Editor = () => {
     return s3Location;
   };
 
-  // CORRECTED APPROACH: Use dispatch(ADD_VIDEO) like drag-and-drop does
-  const addVideosWithDispatch = async (videos: any[]) => {
-    console.log('Adding videos with dispatch - CORRECTED APPROACH');
-    
-    if (videos.length === 0) {
-      console.warn('No videos available to add');
-      return;
-    }
-
-    // Wait for timeline to be ready
-    if (timeline) {
-      await new Promise<void>((resolve) => {
-        const checkTimelineReady = () => {
-          try {
-            if (timeline.getObjects && typeof timeline.requestRenderAll === 'function') {
-              console.log('Timeline is ready for video loading');
-              resolve();
-            } else {
-              console.log('Timeline not ready, waiting...');
-              setTimeout(checkTimelineReady, 100);
-            }
-          } catch (error) {
-            console.log('Timeline check error, retrying...', error);
-            setTimeout(checkTimelineReady, 100);
-          }
-        };
-        checkTimelineReady();
-      });
-    }
-
-    let currentPosition = 0;
-    
-    // Add videos one by one using dispatch, like drag-and-drop does
-    for (let i = 0; i < videos.length; i++) {
-      const video = videos[i];
-      const duration = video.duration ? video.duration * 1000 : 5000;
-      
-      const videoPayload = {
-        id: generateId(),
-        type: "video",
-        details: {
-          src: convertS3UrlToHttps(video.s3_location),
-          width: 1080,
-          height: 1920,
-          volume: 1,
-        },
-        metadata: {
-          previewUrl: video.thumbnail_url || convertS3UrlToHttps(video.s3_location),
-          filename: video.original_name,
-        },
-        duration: duration,
-        // Set positioning manually for sequential layout
-        display: {
-          from: currentPosition,
-          to: currentPosition + duration
-        },
-        trim: {
-          from: 0,
-          to: duration,
-        },
-        playbackRate: 1,
-      };
-
-      console.log(`Dispatching ADD_VIDEO for video ${i + 1}: ${videoPayload.display.from}ms - ${videoPayload.display.to}ms`);
-      
-      // Use the same dispatch mechanism as drag-and-drop
-      dispatch(ADD_VIDEO, {
-        payload: videoPayload,
-        options: {
-          resourceId: "main",
-          scaleMode: "fit",
-        },
+  // Listen for the add multiple videos event
+  useEffect(() => {
+    const subscription = subject
+      .pipe(filter(({ key }) => key === EDITOR_ADD_MULTIPLE_VIDEOS))
+      .subscribe((event) => {
+        const { payload } = event.value || {};
+        if (payload && Array.isArray(payload)) {
+          // Use sequential dispatch for better compatibility
+          payload.forEach((videoItem) => {
+            dispatch(ADD_VIDEO, {
+              payload: videoItem,
+              options: {
+                resourceId: "main",
+                scaleMode: "fit",
+              },
+            });
+          });
+          setShotlistLoaded(true);
+        }
       });
 
-      currentPosition += duration;
-      
-      // Small delay to prevent overwhelming the event system
-      await new Promise(resolve => setTimeout(resolve, 50));
-    }
-    
-    console.log(`Successfully dispatched ${videos.length} videos using ADD_VIDEO events`);
-  };
-
-  // Test function using corrected dispatch approach
-  const testAddOneVideo = async () => {
-    console.log('testAddOneVideo called - using dispatch approach');
-    console.log('Available videos:', videos);
-    
-    if (videos.length === 0) {
-      console.warn('No videos available to add');
-      return;
-    }
-
-    // Get up to 3 videos
-    const videosToAdd = videos.slice(0, 3);
-    console.log(`Adding ${videosToAdd.length} videos with dispatch approach`);
-
-    try {
-      // Use the corrected dispatch approach
-      await addVideosWithDispatch(videosToAdd);
-      
-    } catch (error) {
-      console.error('Error in testAddOneVideo:', error);
-    }
-  };
+    return () => subscription.unsubscribe();
+  }, []);
 
   useTimelineEvents();
 
@@ -295,13 +221,9 @@ const Editor = () => {
 
   // Make functions available globally for testing
   useEffect(() => {
-    (window as any).testAddOneVideo = testAddOneVideo;
     (window as any).addVideosWithAtomicUpdate = addVideosWithAtomicUpdate;
-    (window as any).addVideosWithDispatch = addVideosWithDispatch;
     return () => {
-      delete (window as any).testAddOneVideo;
       delete (window as any).addVideosWithAtomicUpdate;
-      delete (window as any).addVideosWithDispatch;
     };
   }, [videos]); // Re-register when videos change
 
@@ -347,50 +269,24 @@ const Editor = () => {
     return () => window.removeEventListener("resize", onResize);
   }, [timeline]);
 
-  // Test: Run testAddOneVideo on page load
-  useEffect(() => {
-    console.log('Auto-load test check:', {
-      user: !!user,
-      videosLength: videos.length,
-      shotlistLoaded,
-      timeline: !!timeline
-    });
-    
-    // Run test function only once when conditions are met
-    if (user && videos.length > 0 && timeline && !shotlistLoaded) {
-      console.log('Auto-running testAddOneVideo with', videos.length, 'available videos');
-      testAddOneVideo().then(() => {
-        setShotlistLoaded(true);
-      }).catch(error => {
-        console.error('Error in auto-load:', error);
-        setShotlistLoaded(true); // Still mark as loaded to prevent retry
-      });
-    }
-  }, [user, videos, timeline, shotlistLoaded]);
+  // If loading or not logged in, show loading or nothing
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
-  // Load shotlist when user videos are available - COMMENTED OUT FOR DEBUGGING
-  // useEffect(() => {
-  //   console.log('Shotlist loading check:', {
-  //     user: !!user,
-  //     videosLength: videos.length,
-  //     shotlistLoaded,
-  //     timeline: !!timeline
-  //   });
-  //   
-  //   // Load shotlist only once when conditions are met
-  //   if (user && videos.length > 0 && timeline && !shotlistLoaded) {
-  //     console.log('Loading shotlist with', videos.length, 'available videos');
-  //     console.log('Available videos:', videos);
-  //     loadShotlistToTimeline(testShotlist, videos);
-  //     setShotlistLoaded(true);
-  //   }
-  // }, [user, videos, timeline]);
+  if (!user) {
+    return null; // Will redirect in useEffect
+  }
 
   return (
     <div className="flex h-screen w-screen flex-col">
       <Navbar
         projectName={projectName}
-        user={null}
+        user={user}
         stateManager={stateManager}
         setProjectName={setProjectName}
       />

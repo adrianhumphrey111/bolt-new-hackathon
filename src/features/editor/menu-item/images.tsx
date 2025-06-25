@@ -1,34 +1,18 @@
+import Draggable from "@/components/shared/draggable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { IMAGES } from "../data/images";
 import { dispatch } from "@designcombo/events";
+import { ADD_ITEMS } from "@designcombo/state";
 import { generateId } from "@designcombo/timeline";
-import Draggable from "@/components/shared/draggable";
 import { IImage } from "@designcombo/types";
 import React from "react";
 import { useIsDraggingOverTimeline } from "../hooks/is-dragging-over-timeline";
-import { ADD_ITEMS } from "@designcombo/state";
 
 export const Images = () => {
   const isDraggingOverTimeline = useIsDraggingOverTimeline();
 
   const handleAddImage = (payload: Partial<IImage>) => {
     const id = generateId();
-    // dispatch(ADD_IMAGE, {
-    //   payload: {
-    //     id,
-    //     type: "image",
-    //     display: {
-    //       from: 5000,
-    //       to: 10000,
-    //     },
-    //     details: {
-    //       src: payload.details?.src,
-    //     },
-    //   },
-    //   options: {
-    //     scaleMode: "fit",
-    //   },
-    // });
     dispatch(ADD_ITEMS, {
       payload: {
         trackItems: [
@@ -40,7 +24,7 @@ export const Images = () => {
               to: 5000,
             },
             details: {
-              src: payload.details?.src,
+              src: payload.details!.src,
             },
             metadata: {},
           },
@@ -54,8 +38,8 @@ export const Images = () => {
       <div className="text-text-primary flex h-12 flex-none items-center px-4 text-sm font-medium">
         Photos
       </div>
-      <ScrollArea>
-        <div className="masonry-sm px-4">
+      <ScrollArea className="h-[calc(100vh-58px-48px)]">
+        <div className="grid grid-cols-2 gap-3 p-4 pb-20">
           {IMAGES.map((image, index) => {
             return (
               <ImageItem
@@ -106,7 +90,7 @@ const ImageItem = ({
             },
           } as IImage)
         }
-        className="flex w-full items-center justify-center overflow-hidden bg-background pb-2"
+        className="flex w-full cursor-pointer items-center justify-center overflow-hidden bg-background pb-2"
       >
         <img
           draggable={false}
