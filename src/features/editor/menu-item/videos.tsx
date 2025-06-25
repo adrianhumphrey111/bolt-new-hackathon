@@ -145,8 +145,8 @@ export const Videos = () => {
       <div className="text-text-primary flex h-12 flex-none items-center px-4 text-sm font-medium">
         Your Videos ({videos.length})
       </div>
-      <ScrollArea>
-        <div className="masonry-sm px-4">
+      <ScrollArea className="h-[calc(100vh-58px-48px)]">
+        <div className="grid grid-cols-2 gap-2 px-4">
           {videos.map((video) => {
             const signedUrl = videoUrls[video.id] || video.s3_location;
             const videoData: Partial<IVideo> = {

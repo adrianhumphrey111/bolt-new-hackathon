@@ -13,22 +13,6 @@ export const Images = () => {
 
   const handleAddImage = (payload: Partial<IImage>) => {
     const id = generateId();
-    // dispatch(ADD_IMAGE, {
-    //   payload: {
-    //     id,
-    //     type: "image",
-    //     display: {
-    //       from: 5000,
-    //       to: 10000,
-    //     },
-    //     details: {
-    //       src: payload.details?.src,
-    //     },
-    //   },
-    //   options: {
-    //     scaleMode: "fit",
-    //   },
-    // });
     dispatch(ADD_ITEMS, {
       payload: {
         trackItems: [
@@ -54,8 +38,8 @@ export const Images = () => {
       <div className="text-text-primary flex h-12 flex-none items-center px-4 text-sm font-medium">
         Photos
       </div>
-      <ScrollArea>
-        <div className="masonry-sm px-4">
+      <ScrollArea className="h-[calc(100vh-58px-48px)]">
+        <div className="grid grid-cols-2 gap-2 px-4">
           {IMAGES.map((image, index) => {
             return (
               <ImageItem
@@ -106,7 +90,7 @@ const ImageItem = ({
             },
           } as IImage)
         }
-        className="flex w-full items-center justify-center overflow-hidden bg-background pb-2"
+        className="flex w-full items-center justify-center overflow-hidden bg-background pb-2 cursor-pointer"
       >
         <img
           draggable={false}

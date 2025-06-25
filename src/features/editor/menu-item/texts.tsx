@@ -6,6 +6,7 @@ import { dispatch } from '@designcombo/events';
 import { ADD_TEXT } from '@designcombo/state';
 import { generateId } from '@designcombo/timeline';
 import { useIsDraggingOverTimeline } from '../hooks/is-dragging-over-timeline';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export const getAddTextPayload = () => ({
   id: generateId(),
@@ -49,24 +50,26 @@ export const Texts = () => {
       <div className="flex h-12 flex-none items-center px-4 font-medium text-sm text-text-primary">
         Text
       </div>
-      <div className="flex flex-col gap-2 px-4">
-        <Draggable
-          data={getAddTextPayload}
-          renderCustomPreview={
-            <Button variant="secondary" className="w-60">
-              Add text
-            </Button>
-          }
-          shouldDisplayPreview={!isDraggingOverTimeline}
-        >
-          <div
-            onClick={handleAddText}
-            className={cn(buttonVariants({ variant: 'secondary' }))}
+      <ScrollArea className="h-[calc(100vh-58px-48px)]">
+        <div className="flex flex-col gap-2 px-4">
+          <Draggable
+            data={getAddTextPayload}
+            renderCustomPreview={
+              <Button variant="secondary" className="w-60">
+                Add text
+              </Button>
+            }
+            shouldDisplayPreview={!isDraggingOverTimeline}
           >
-            Add text
-          </div>
-        </Draggable>
-      </div>
+            <div
+              onClick={handleAddText}
+              className={cn(buttonVariants({ variant: 'secondary' }))}
+            >
+              Add text
+            </div>
+          </Draggable>
+        </div>
+      </ScrollArea>
     </div>
   );
 };

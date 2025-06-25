@@ -10,22 +10,6 @@ export default function MenuList() {
     <div className="flex w-14 flex-col items-center gap-1 border-r border-border/80 py-2">
       <Button
         onClick={() => {
-          setActiveMenuItem("texts");
-          setShowMenuItem(true);
-        }}
-        className={cn(
-          showMenuItem && activeMenuItem === "texts"
-            ? "bg-secondary"
-            : "text-muted-foreground",
-        )}
-        variant={"ghost"}
-        size={"icon"}
-      >
-        <Icons.type width={16} />
-      </Button>
-
-      <Button
-        onClick={() => {
           setActiveMenuItem("videos");
           setShowMenuItem(true);
         }}
@@ -55,21 +39,23 @@ export default function MenuList() {
       >
         <Icons.image width={16} />
       </Button>
-      {/* <Button
+
+      <Button
         onClick={() => {
-          setActiveMenuItem("shapes");
+          setActiveMenuItem("texts");
           setShowMenuItem(true);
         }}
         className={cn(
-          showMenuItem && activeMenuItem === "shapes"
+          showMenuItem && activeMenuItem === "texts"
             ? "bg-secondary"
             : "text-muted-foreground",
         )}
         variant={"ghost"}
         size={"icon"}
       >
-        <Icons.shapes width={16} />
-      </Button> */}
+        <Icons.type width={16} />
+      </Button>
+
       <Button
         onClick={() => {
           setActiveMenuItem("audios");
