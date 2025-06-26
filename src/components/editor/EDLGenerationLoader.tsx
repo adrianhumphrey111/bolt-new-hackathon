@@ -12,14 +12,10 @@ interface EDLGenerationLoaderProps {
 }
 
 interface EDLStep {
-  id: string
-  label: string
-  description: string
-  icon: React.ElementType
-  status: 'pending' | 'processing' | 'completed' | 'failed'
-  duration?: number
-  startedAt?: string
-  completedAt?: string
+  agent_name: string
+  status: 'pending' | 'running' | 'completed' | 'failed'
+  started_at: string | null
+  completed_at: string | null
 }
 
 interface JobStatus {
@@ -57,32 +53,28 @@ export default function EDLGenerationLoader({
 
   const defaultSteps: EDLStep[] = [
     {
-      id: 'script_analysis',
-      label: 'Script Analysis',
-      description: 'Breaking down script into dialogue segments and narrative beats...',
-      icon: FiLayers,
-      status: 'pending'
+      agent_name: "SCRIPT_ANALYZER",
+      status: "pending",
+      started_at: null,
+      completed_at: null
     },
     {
-      id: 'content_matching',
-      label: 'Content Matching',
-      description: 'Finding video clips that match script segments and dialogue...',
-      icon: FiEye,
-      status: 'pending'
+      agent_name: "CONTENT_MATCHER",
+      status: "pending",
+      started_at: null,
+      completed_at: null
     },
     {
-      id: 'edl_generation',
-      label: 'EDL Generation',
-      description: 'Creating editorial decisions with detailed explanations...',
-      icon: FiEdit,
-      status: 'pending'
+      agent_name: "EDL_GENERATOR",
+      status: "pending",
+      started_at: null,
+      completed_at: null
     },
     {
-      id: 'shot_list_generation',
-      label: 'Shot List Generation',
-      description: 'Generating precise shot list with exact timing...',
-      icon: FiScissors,
-      status: 'pending'
+      agent_name: "SHOT_LIST_GENERATOR",
+      status: "pending",
+      started_at: null,
+      completed_at: null
     }
   ]
 
@@ -145,30 +137,16 @@ export default function EDLGenerationLoader({
 
       // Update steps based on API response
       const updatedSteps = steps.map(step => {
-        const apiStep = status.steps?.find((s: any) => 
-          s.agent_name === getAgentNameFromStepId(step.id)
+        const apiStep = status.steps?.find((s: EDLStep) => 
+          s.agent_name === step.agent_name
         )
         
         if (apiStep) {
-          let stepStatus: 'pending' | 'processing' | 'completed' | 'failed' = 'pending';
-          
-          if (apiStep.status === 'completed') {
-            stepStatus = 'completed';
-          } else if (apiStep.status === 'running') {
-            stepStatus = 'processing';
-          } else if (apiStep.status === 'failed') {
-            stepStatus = 'failed';
-          } else if (apiStep.started_at && !apiStep.completed_at) {
-            stepStatus = 'processing';
-          } else if (apiStep.started_at && apiStep.completed_at) {
-            stepStatus = 'completed';
-          }
-          
           return {
             ...step,
-            status: stepStatus,
-            startedAt: apiStep.started_at,
-            completedAt: apiStep.completed_at
+            status: apiStep.status,
+            started_at: apiStep.started_at,
+            completed_at: apiStep.completed_at
           }
         }
         return step
@@ -195,15 +173,52 @@ export default function EDLGenerationLoader({
     }
   }
 
-  // Map step IDs to agent names
-  const getAgentNameFromStepId = (stepId: string): string => {
-    const mapping: Record<string, string> = {
-      'script_analysis': 'SCRIPT_ANALYZER',
-      'content_matching': 'CONTENT_MATCHER',
-      'edl_generation': 'EDL_GENERATOR',
-      'shot_list_generation': 'SHOT_LIST_GENERATOR'
+  // Get icon for each step
+  const getStepIcon = (agentName: string) => {
+    switch (agentName) {
+      case 'SCRIPT_ANALYZER':
+        return FiLayers
+      case 'CONTENT_MATCHER':
+        return FiEye
+      case 'EDL_GENERATOR':
+        return FiEdit
+      case 'SHOT_LIST_GENERATOR':
+        return FiScissors
+      default:
+        return FiTarget
     }
-    return mapping[stepId] || stepId
+  }
+
+  // Get human-readable name for each step
+  const getStepName = (agentName: string) => {
+    switch (agentName) {
+      case 'SCRIPT_ANALYZER':
+        return 'Script Analysis'
+      case 'CONTENT_MATCHER':
+        return 'Content Matching'
+      case 'EDL_GENERATOR':
+        return 'EDL Generation'
+      case 'SHOT_LIST_GENERATOR':
+        return 'Shot List Generation'
+      default:
+        return agentName
+    }
+  }
+
+  // Get description for each step
+  const getStepDescription = (agentName: string) => {
+    switch (agentName) {
+      case 'SCRIPT_ANALYZER':
+        return 'Breaking down script into dialogue segments and narrative beats...'
+      case 'CONTENT_MATCHER':
+        return 'Finding video clips that match script segments and dialogue...'
+      case 'EDL_GENERATOR':
+        return 'Creating editorial decisions with detailed explanations...'
+      case 'SHOT_LIST_GENERATOR':
+        return 'Generating precise shot list with exact timing...'
+      default:
+        return 'Processing...'
+    }
   }
 
   // Start generation when modal opens
@@ -346,14 +361,16 @@ export default function EDLGenerationLoader({
 
           {/* Steps */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {steps.map((step, index) => {
-              const IconComponent = step.icon
-              const isActive = step.status === 'processing'
+            {steps.map((step) => {
+              const IconComponent = getStepIcon(step.agent_name)
+              const isActive = step.status === 'running'
               const isCompleted = step.status === 'completed'
               const isFailed = step.status === 'failed'
+              const stepName = getStepName(step.agent_name)
+              const stepDescription = getStepDescription(step.agent_name)
               
               return (
-                <div key={step.id} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                <div key={step.agent_name} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
                   <div style={{
                     width: '40px',
                     height: '40px',
@@ -375,7 +392,7 @@ export default function EDLGenerationLoader({
                       color: isFailed ? '#f87171' : isCompleted ? '#10b981' : isActive ? '#3b82f6' : '#9ca3af',
                       marginBottom: '0.25rem'
                     }}>
-                      {step.label}
+                      {stepName}
                       {isActive && (
                         <span style={{ marginLeft: '0.5rem' }}>
                           <div style={{
@@ -394,20 +411,20 @@ export default function EDLGenerationLoader({
                       fontSize: '0.875rem', 
                       color: isActive ? '#d1d5db' : '#9ca3af' 
                     }}>
-                      {step.description}
+                      {stepDescription}
                     </div>
-                    {step.startedAt && (
+                    {step.started_at && (
                       <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
                         <FiClock style={{ display: 'inline', marginRight: '0.25rem' }} />
-                        {step.completedAt ? (
+                        {step.completed_at ? (
                           <>
-                            Completed: {new Date(step.completedAt).toLocaleTimeString()}
+                            Completed: {new Date(step.completed_at).toLocaleTimeString()}
                             <span style={{ color: '#9ca3af', marginLeft: '0.5rem' }}>
-                              ({Math.round((new Date(step.completedAt).getTime() - new Date(step.startedAt).getTime()) / 1000)}s)
+                              ({Math.round((new Date(step.completed_at).getTime() - new Date(step.started_at).getTime()) / 1000)}s)
                             </span>
                           </>
                         ) : (
-                          <>Started: {new Date(step.startedAt).toLocaleTimeString()}</>
+                          <>Started: {new Date(step.started_at).toLocaleTimeString()}</>
                         )}
                       </div>
                     )}
@@ -458,16 +475,16 @@ export default function EDLGenerationLoader({
             </div>
           )}
         </div>
-      </div>
 
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-        `
-      }} />
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            @keyframes spin {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(360deg); }
+            }
+          `
+        }} />
+      </div>
     </div>
   )
 }
