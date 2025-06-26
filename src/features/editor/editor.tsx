@@ -28,6 +28,7 @@ import { EDITOR_ADD_MULTIPLE_VIDEOS } from "./constants/events";
 import { ADD_VIDEO } from "@designcombo/state";
 import { generateId } from "@designcombo/timeline";
 import { useRouter } from "next/navigation";
+import { loadShotListForTimeline, getLatestCompletedEDLJob } from "@/utils/shot-list-loader";
 
 const stateManager = new StateManager({
   size: {
@@ -45,7 +46,8 @@ const Editor = ({ projectId }: EditorProps = {}) => {
   const timelinePanelRef = useRef<ImperativePanelHandle>(null);
   const { timeline, playerRef } = useStore();
   const { user, loading } = useAuth();
-  const { videos } = useUserVideos();
+  
+  const { videos } = useUserVideos(projectId);
   const [shotlistLoaded, setShotlistLoaded] = useState(false);
   const router = useRouter();
 
@@ -90,7 +92,9 @@ const Editor = ({ projectId }: EditorProps = {}) => {
 
     // Pre-calculate all video items with correct positioning
     videos.forEach((video, index) => {
-      const duration = video.duration ? video.duration * 1000 : 5000;
+      // For shot list videos, use clip_duration if available, otherwise use duration
+      const duration = video.clip_duration ? video.clip_duration * 1000 : 
+                      video.duration ? video.duration * 1000 : 5000;
       const videoId = generateId();
       
       const videoItem = {
@@ -111,10 +115,14 @@ const Editor = ({ projectId }: EditorProps = {}) => {
         metadata: {
           previewUrl: video.thumbnail_url || convertS3UrlToHttps(video.s3_location),
           filename: video.original_name,
+          shotNumber: video.shot_number,
+          chunkId: video.chunk_id,
+          contentPreview: video.content_preview,
+          narrativePurpose: video.narrative_purpose,
         },
         trim: {
-          from: 0,
-          to: duration,
+          from: video.start_time ? video.start_time * 1000 : 0,
+          to: video.end_time ? video.end_time * 1000 : duration,
         },
         playbackRate: 1,
       };
@@ -195,6 +203,81 @@ const Editor = ({ projectId }: EditorProps = {}) => {
     return s3Location;
   };
 
+  // Function to load shot list from EDL generation job
+  const loadShotListFromEDL = async (jobId?: string) => {
+    if (!projectId) {
+      console.error('No project ID available for shot list loading');
+      return;
+    }
+
+    try {
+      let targetJobId = jobId;
+      
+      // If no specific job ID provided, get the latest completed EDL job
+      if (!targetJobId) {
+        console.log('No job ID provided, finding latest completed EDL job...');
+        const latestJob = await getLatestCompletedEDLJob(projectId);
+        
+        if (!latestJob.success) {
+          console.error('No completed EDL jobs found:', latestJob.error);
+          return;
+        }
+        
+        targetJobId = latestJob.jobId;
+        console.log('Found latest completed EDL job:', targetJobId);
+      }
+
+      console.log(`Loading shot list from EDL job: ${targetJobId}`);
+      
+      // Load the shot list from the database
+      const result = await loadShotListForTimeline(targetJobId!);
+      
+      if (!result.success) {
+        console.error('Failed to load shot list:', result.error);
+        return;
+      }
+
+      if (result.videos.length === 0) {
+        console.log('No shots found in the EDL job');
+        return;
+      }
+
+      console.log(`Loading ${result.videos.length} shots from EDL job`);
+
+      // Convert shot list videos to the expected format for the timeline
+      const timelineVideos = result.videos.map((video, index) => ({
+        id: video.id,
+        original_name: video.original_name,
+        file_name: video.file_name,
+        s3_location: video.s3_location,
+        duration: video.duration,
+        // Use shot-specific timing if available
+        start_time: video.start_time,
+        end_time: video.end_time,
+        shot_number: video.shot_number,
+        chunk_id: video.chunk_id,
+        content_preview: video.content_preview,
+        narrative_purpose: video.narrative_purpose,
+        // Calculate precise duration for timeline positioning
+        clip_duration: video.end_time && video.start_time ? 
+          (video.end_time - video.start_time) : 
+          5.0 // fallback duration
+      }));
+
+      console.log('Converted shots for timeline:', timelineVideos.length);
+
+      // Load using the atomic update function with shot-specific durations
+      await addVideosWithAtomicUpdate(timelineVideos);
+      
+      setShotlistLoaded(true);
+      console.log(`✅ Successfully loaded ${result.videos.length} shots from EDL job ${targetJobId}`);
+      console.log(`Total duration: ${result.totalDuration}s`);
+
+    } catch (error) {
+      console.error('Error loading shot list from EDL:', error);
+    }
+  };
+
   // Listen for the add multiple videos event
   useEffect(() => {
     const subscription = subject
@@ -226,10 +309,12 @@ const Editor = ({ projectId }: EditorProps = {}) => {
   // Make functions available globally for testing
   useEffect(() => {
     (window as any).addVideosWithAtomicUpdate = addVideosWithAtomicUpdate;
+    (window as any).loadShotListFromEDL = loadShotListFromEDL;
     return () => {
       delete (window as any).addVideosWithAtomicUpdate;
+      delete (window as any).loadShotListFromEDL;
     };
-  }, [videos]); // Re-register when videos change
+  }, [videos, projectId]); // Re-register when videos or projectId change
 
   useEffect(() => {
     setCompactFonts(getCompactFontData(FONTS));
@@ -294,6 +379,7 @@ const Editor = ({ projectId }: EditorProps = {}) => {
         stateManager={stateManager}
         setProjectName={setProjectName}
         projectId={projectId}
+        onLoadShotList={loadShotListFromEDL}
       />
       <div className="flex flex-1">
         <ResizablePanelGroup style={{ flex: 1 }} direction="vertical">
@@ -302,7 +388,7 @@ const Editor = ({ projectId }: EditorProps = {}) => {
             <div className="flex h-full flex-1">
               <div className="bg-sidebar flex flex-none border-r border-border/80">
                 <MenuList />
-                <MenuItem />
+                <MenuItem videos={videos} />
               </div>
               <div
                 style={{

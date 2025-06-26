@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false, // Disabled to prevent duplicate API calls during development
   transpilePackages: [
     "@designcombo/events",
     "@designcombo/frames",

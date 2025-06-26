@@ -25,6 +25,8 @@ export interface EdlGenerationJob {
   updated_at: string
   shot_list: ShotlistItem[]
   user_id: string
+  user_intent: string
+  script_content: string | null
 }
 
 export function useShotlist(projectId?: string) {

@@ -5,7 +5,22 @@ import { Elements } from "./elements";
 import { Images } from "./images";
 import { Videos } from "./videos";
 
-const ActiveMenuItem = () => {
+interface UserVideo {
+  id: string
+  file_name: string
+  original_name: string
+  s3_location: string
+  thumbnail_url?: string
+  duration?: number
+  created_at: string
+  project_id: string
+}
+
+interface MenuItemProps {
+  videos: UserVideo[]
+}
+
+const ActiveMenuItem = ({ videos }: MenuItemProps) => {
   const { activeMenuItem } = useLayoutStore();
 
   if (activeMenuItem === "texts") {
@@ -15,7 +30,7 @@ const ActiveMenuItem = () => {
     return <Elements />;
   }
   if (activeMenuItem === "videos") {
-    return <Videos />;
+    return <Videos videos={videos} />;
   }
 
   if (activeMenuItem === "audios") {
@@ -29,10 +44,10 @@ const ActiveMenuItem = () => {
   return null;
 };
 
-export const MenuItem = () => {
+export const MenuItem = ({ videos }: MenuItemProps) => {
   return (
     <div className="w-[300px] flex-1">
-      <ActiveMenuItem />
+      <ActiveMenuItem videos={videos} />
     </div>
   );
 };

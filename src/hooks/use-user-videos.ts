@@ -1,7 +1,7 @@
 'use client'
 
 import { createClient } from '@/lib/supabase'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useAuth } from './use-auth'
 
 interface UserVideo {
@@ -15,15 +15,18 @@ interface UserVideo {
   project_id: string
 }
 
-export function useUserVideos() {
+export function useUserVideos(projectId: string) {
+  console.log({projectId})
   const [videos, setVideos] = useState<UserVideo[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { user } = useAuth()
-  const supabase = createClient()
+  
+  // Memoize supabase client to prevent recreating on every render
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
-    if (!user) {
+    if (!user?.id) {
       setVideos([])
       setLoading(false)
       return
@@ -39,6 +42,7 @@ export function useUserVideos() {
           .from('videos')
           .select('*')
           .order('created_at', { ascending: false })
+          .eq('project_id', projectId)
 
         if (error) {
           console.error('Error fetching user videos:', error)
@@ -54,11 +58,14 @@ export function useUserVideos() {
       }
     }
 
-    fetchUserVideos()
+    if(videos.length === 0 ){
+      fetchUserVideos()
+    }
+    
 
     // Note: Real-time subscriptions removed to avoid WebSocket connection issues
     // Videos will be refreshed when component remounts
-  }, [user, supabase])
+  }, [user]) // Only depend on user.id, not the full user object
 
   const generateSignedUrl = async (s3Location: string): Promise<string | null> => {
     try {

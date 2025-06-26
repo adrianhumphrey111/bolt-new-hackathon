@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { dispatch } from "@designcombo/events";
 import { HISTORY_UNDO, HISTORY_REDO, DESIGN_RESIZE } from "@designcombo/state";
@@ -36,18 +36,23 @@ export default function Navbar({
   projectName,
   user,
   projectId,
+  onLoadShotList,
 }: {
   user: any;
   stateManager: StateManager;
   setProjectName: (name: string) => void;
   projectName: string;
   projectId?: string;
+  onLoadShotList?: (jobId?: string) => Promise<void>;
 }) {
   const [title, setTitle] = useState(projectName);
   const [showEDLModal, setShowEDLModal] = useState(false);
   const [showEDLLoader, setShowEDLLoader] = useState(false);
   const [edlIntent, setEdlIntent] = useState('');
   const [scriptContent, setScriptContent] = useState('');
+  const [completedJobId, setCompletedJobId] = useState<string | null>(null);
+  const [isStarting, setIsStarting] = useState(false);
+  const lastCallTimeRef = useRef<number>(0);
   const { loading } = useAuth();
   const router = useRouter();
   const supabase = createClient();
@@ -90,46 +95,79 @@ export default function Navbar({
   };
 
   const handleSubmitEDL = async () => {
-    if (edlIntent.trim() && projectId) {
-      console.log('EDL Submit - Intent:', edlIntent);
-      console.log('EDL Submit - Script:', scriptContent);
-      console.log('EDL Submit - Project ID:', projectId);
-      
-      setShowEDLModal(false);
-      setShowEDLLoader(true);
-      
-      try {
-        const response = await fetch(`/api/timeline/${projectId}/generate-edl-async`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userIntent: edlIntent,
-            scriptContent: scriptContent
-          })
-        });
+    const now = Date.now();
+    
+    // Multiple checks to prevent duplicate calls
+    if (!edlIntent.trim() || !projectId || isStarting) {
+      console.log('EDL Submit blocked:', { edlIntent: !!edlIntent.trim(), projectId: !!projectId, isStarting });
+      return;
+    }
+    
+    // Prevent rapid successive calls (debounce)
+    if (now - lastCallTimeRef.current < 1000) {
+      console.log('EDL Submit blocked: too soon after last call');
+      return;
+    }
+    
+    lastCallTimeRef.current = now;
+    setIsStarting(true); // Prevent multiple submissions
+    
+    console.log('EDL Submit - Intent:', edlIntent);
+    console.log('EDL Submit - Script:', scriptContent);
+    console.log('EDL Submit - Project ID:', projectId);
+    
+    setShowEDLModal(false);
+    setShowEDLLoader(true);
+    
+    try {
+      const response = await fetch(`/api/timeline/${projectId}/generate-edl-async`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userIntent: edlIntent,
+          scriptContent: scriptContent
+        })
+      });
 
-        const result = await response.json();
-        console.log('EDL API Response:', result);
+      const result = await response.json();
+      console.log('EDL API Response:', result);
 
-        if (!response.ok) {
-          throw new Error(result.error || 'Failed to start EDL generation');
-        }
-
-        // The EDLGenerationLoader will handle the polling
-        console.log('EDL generation started with job ID:', result.jobId);
-        
-      } catch (error) {
-        console.error('EDL generation failed:', error);
-        setShowEDLLoader(false);
-        // Don't reset the form on error so user can retry
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to start EDL generation');
       }
+
+      // The EDLGenerationLoader will handle the polling
+      console.log('EDL generation started with job ID:', result.jobId);
+      
+    } catch (error) {
+      console.error('EDL generation failed:', error);
+      setShowEDLLoader(false);
+      // Don't reset the form on error so user can retry
+    } finally {
+      // Always reset starting state, regardless of success or failure
+      setIsStarting(false);
     }
   };
 
-  const handleCloseEDLLoader = () => {
+  const handleCloseEDLLoader = async () => {
     setShowEDLLoader(false);
+    
+    // If we have a completed job and a load function, load the shot list
+    if (completedJobId && onLoadShotList) {
+      console.log('EDL generation completed, loading shot list for job:', completedJobId);
+      try {
+        await onLoadShotList(completedJobId);
+        console.log('Shot list loaded successfully');
+      } catch (error) {
+        console.error('Failed to load shot list:', error);
+      }
+    }
+    
+    // Reset form state
     setEdlIntent('');
     setScriptContent('');
+    setCompletedJobId(null);
+    setIsStarting(false); // Reset the starting state
   };
 
   return (
@@ -338,18 +376,18 @@ export default function Navbar({
               </button>
               <button
                 onClick={handleSubmitEDL}
-                disabled={!edlIntent.trim()}
+                disabled={!edlIntent.trim() || isStarting}
                 style={{
                   padding: '0.5rem 1rem',
                   background: '#059669',
                   color: 'white',
                   border: 'none',
                   borderRadius: '0.375rem',
-                  cursor: 'pointer',
-                  opacity: !edlIntent.trim() ? 0.5 : 1
+                  cursor: (!edlIntent.trim() || isStarting) ? 'not-allowed' : 'pointer',
+                  opacity: (!edlIntent.trim() || isStarting) ? 0.5 : 1
                 }}
               >
-                Generate EDL
+                {isStarting ? 'Starting...' : 'Generate EDL'}
               </button>
             </div>
           </div>
@@ -362,6 +400,7 @@ export default function Navbar({
         userIntent={edlIntent}
         scriptContent={scriptContent}
         projectId={projectId}
+        onJobCompleted={setCompletedJobId}
       />
     </div>
   );

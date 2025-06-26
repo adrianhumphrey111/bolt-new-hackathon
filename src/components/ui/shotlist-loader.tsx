@@ -13,7 +13,7 @@ interface ShotlistLoaderProps {
 
 export function ShotlistLoader({ projectId, onComplete }: ShotlistLoaderProps) {
   const { shotlist, loading: shotlistLoading, error: shotlistError } = useShotlist(projectId);
-  const { videos, loading: videosLoading } = useUserVideos();
+  const { videos, loading: videosLoading } = { videos: [], loading: false} //useUserVideos();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);

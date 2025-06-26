@@ -6,16 +6,32 @@ import { generateId } from "@designcombo/timeline";
 import { IVideo } from "@designcombo/types";
 import React, { useState, useEffect } from "react";
 import { useIsDraggingOverTimeline } from "../hooks/is-dragging-over-timeline";
-import { useUserVideos } from "@/hooks/use-user-videos";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { FiUpload, FiVideo, FiPlayCircle } from "react-icons/fi";
 
-export const Videos = () => {
+interface UserVideo {
+  id: string
+  file_name: string
+  original_name: string
+  s3_location: string
+  thumbnail_url?: string
+  duration?: number
+  created_at: string
+  project_id: string
+}
+
+interface VideosProps {
+  videos: UserVideo[]
+}
+
+export const Videos = ({ videos }: VideosProps) => {
   const isDraggingOverTimeline = useIsDraggingOverTimeline();
   const { user } = useAuth();
-  const { videos, loading, error } = useUserVideos();
+  const loading = false;
+  const error = null;
+
   const [videoUrls, setVideoUrls] = useState<Record<string, string>>({});
 
   const handleAddVideo = (payload: Partial<IVideo>) => {

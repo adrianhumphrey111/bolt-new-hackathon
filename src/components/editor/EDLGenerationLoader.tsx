@@ -9,6 +9,7 @@ interface EDLGenerationLoaderProps {
   userIntent: string
   scriptContent?: string
   projectId?: string
+  onJobCompleted?: (jobId: string) => void
 }
 
 interface EDLStep {
@@ -45,11 +46,13 @@ export default function EDLGenerationLoader({
   onClose, 
   userIntent, 
   scriptContent,
-  projectId 
+  projectId,
+  onJobCompleted
 }: EDLGenerationLoaderProps) {
   const [jobStatus, setJobStatus] = useState<JobStatus | null>(null)
   const [isStarting, setIsStarting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  let pollCount = 0 // Track polling attempts for exponential backoff
 
   const defaultSteps: EDLStep[] = [
     {
@@ -155,11 +158,19 @@ export default function EDLGenerationLoader({
       setSteps(updatedSteps)
       setJobStatus(prev => prev ? { ...prev, ...status } : status)
 
-      // Continue polling if still running
+      // Continue polling if still running with exponential backoff
       if (status.status === 'running') {
-        setTimeout(() => pollJobStatus(jobId), 2000)
+        const pollInterval = Math.min(2000 + (pollCount * 500), 10000) // Start at 2s, increase by 0.5s each time, max 10s
+        setTimeout(() => {
+          pollCount++
+          pollJobStatus(jobId)
+        }, pollInterval)
       } else if (status.status === 'completed') {
-        // Job completed successfully
+        // Job completed successfully, notify parent component
+        if (onJobCompleted) {
+          onJobCompleted(jobId);
+        }
+        // Give user time to see completion before auto-closing
         setTimeout(() => {
           onClose()
         }, 2000)
