@@ -36,7 +36,11 @@ const stateManager = new StateManager({
   },
 });
 
-const Editor = () => {
+interface EditorProps {
+  projectId?: string;
+}
+
+const Editor = ({ projectId }: EditorProps = {}) => {
   const [projectName, setProjectName] = useState<string>("Untitled video");
   const timelinePanelRef = useRef<ImperativePanelHandle>(null);
   const { timeline, playerRef } = useStore();
@@ -289,6 +293,7 @@ const Editor = () => {
         user={user}
         stateManager={stateManager}
         setProjectName={setProjectName}
+        projectId={projectId}
       />
       <div className="flex flex-1">
         <ResizablePanelGroup style={{ flex: 1 }} direction="vertical">

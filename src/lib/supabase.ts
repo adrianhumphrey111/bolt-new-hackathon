@@ -1,6 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr'
 import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 
 export const createClient = () => {
   return createBrowserClient(
@@ -22,6 +21,8 @@ export const createClient = () => {
 }
 
 export const createServerComponentClient = () => {
+  // Import cookies here to avoid top-level server imports in client components
+  const { cookies } = require('next/headers')
   const cookieStore = cookies()
   
   return createServerClient(

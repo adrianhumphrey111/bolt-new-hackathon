@@ -72,7 +72,7 @@ export default function Dashboard() {
 
   const goToEditor = (projectId?: string) => {
     if (projectId) {
-      router.push(`/?project=${projectId}`)
+      router.push(`/dashboard/projects/${projectId}/editor`)
     } else {
       router.push('/')
     }
@@ -156,7 +156,11 @@ export default function Dashboard() {
                       </div>
                       <Button 
                         size="sm"
-                        onClick={() => goToEditor(project.id)}
+                        onClick={(e) => {
+                          console.log('Edit button clicked for project:', project.id)
+                          e.stopPropagation()
+                          goToEditor(project.id)
+                        }}
                         className="ml-4"
                       >
                         Edit

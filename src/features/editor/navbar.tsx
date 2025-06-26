@@ -27,19 +27,27 @@ import { ShotlistLoader } from "@/components/ui/shotlist-loader";
 import { useAuth } from "@/hooks/use-auth";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { FiVideo } from "react-icons/fi";
+import EDLGenerationLoader from "@/components/editor/EDLGenerationLoader";
 
 export default function Navbar({
   stateManager,
   setProjectName,
   projectName,
   user,
+  projectId,
 }: {
   user: any;
   stateManager: StateManager;
   setProjectName: (name: string) => void;
   projectName: string;
+  projectId?: string;
 }) {
   const [title, setTitle] = useState(projectName);
+  const [showEDLModal, setShowEDLModal] = useState(false);
+  const [showEDLLoader, setShowEDLLoader] = useState(false);
+  const [edlIntent, setEdlIntent] = useState('');
+  const [scriptContent, setScriptContent] = useState('');
   const { loading } = useAuth();
   const router = useRouter();
   const supabase = createClient();
@@ -75,6 +83,53 @@ export default function Navbar({
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     router.push('/auth/login');
+  };
+
+  const handleGenerateEDL = () => {
+    setShowEDLModal(true);
+  };
+
+  const handleSubmitEDL = async () => {
+    if (edlIntent.trim() && projectId) {
+      console.log('EDL Submit - Intent:', edlIntent);
+      console.log('EDL Submit - Script:', scriptContent);
+      console.log('EDL Submit - Project ID:', projectId);
+      
+      setShowEDLModal(false);
+      setShowEDLLoader(true);
+      
+      try {
+        const response = await fetch(`/api/timeline/${projectId}/generate-edl-async`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userIntent: edlIntent,
+            scriptContent: scriptContent
+          })
+        });
+
+        const result = await response.json();
+        console.log('EDL API Response:', result);
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to start EDL generation');
+        }
+
+        // The EDLGenerationLoader will handle the polling
+        console.log('EDL generation started with job ID:', result.jobId);
+        
+      } catch (error) {
+        console.error('EDL generation failed:', error);
+        setShowEDLLoader(false);
+        // Don't reset the form on error so user can retry
+      }
+    }
+  };
+
+  const handleCloseEDLLoader = () => {
+    setShowEDLLoader(false);
+    setEdlIntent('');
+    setScriptContent('');
   };
 
   return (
@@ -153,6 +208,15 @@ export default function Navbar({
         <div className="pointer-events-auto">
           <ShotlistLoader />
         </div>
+        <div className="pointer-events-auto">
+          <Button
+            onClick={handleGenerateEDL}
+            className="flex h-8 gap-1 border border-border bg-green-600 hover:bg-green-700"
+            variant="default"
+          >
+            <FiVideo width={18} /> Generate EDL
+          </Button>
+        </div>
       </div>
 
       <div className="flex h-14 items-center justify-end gap-2">
@@ -175,6 +239,130 @@ export default function Navbar({
           </Button>
         </div>
       </div>
+
+      {/* EDL Generation Modal */}
+      {showEDLModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 99999
+        }}>
+          <div style={{
+            background: '#1f2937',
+            padding: '2rem',
+            borderRadius: '0.5rem',
+            maxWidth: '600px',
+            width: '90%',
+            maxHeight: '80vh',
+            overflow: 'auto',
+            color: 'white',
+            pointerEvents: 'auto',
+            position: 'relative',
+            zIndex: 100000
+          }}>
+            <h2 style={{ margin: '0 0 1rem 0', color: '#059669' }}>
+              <FiVideo style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
+              Generate Edit Decision List
+            </h2>
+            <p style={{ margin: '0 0 1.5rem 0', color: '#9ca3af' }}>
+              Create a precise Edit Decision List from your video clips. Our AI will analyze your content, match it to your script, and generate a professional timeline.
+            </p>
+            
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#e5e7eb' }}>
+                Video Intent (Required)
+              </label>
+              <textarea
+                value={edlIntent}
+                onChange={(e) => setEdlIntent(e.target.value)}
+                placeholder="e.g., Create a video that follows the script exactly, matching content to script order"
+                style={{
+                  width: '100%',
+                  height: '80px',
+                  padding: '0.5rem',
+                  background: '#111827',
+                  border: '1px solid #374151',
+                  borderRadius: '0.375rem',
+                  color: 'white',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#e5e7eb' }}>
+                Script Content (Optional)
+              </label>
+              <textarea
+                value={scriptContent}
+                onChange={(e) => setScriptContent(e.target.value)}
+                placeholder="Paste your script here for precise content matching..."
+                style={{
+                  width: '100%',
+                  height: '150px',
+                  padding: '0.5rem',
+                  background: '#111827',
+                  border: '1px solid #374151',
+                  borderRadius: '0.375rem',
+                  color: 'white',
+                  resize: 'vertical'
+                }}
+              />
+              <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.5rem' }}>
+                Including a script helps the AI match specific dialogue and scenes to your video clips
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  console.log("clicked")
+                  setShowEDLModal(false)
+                }}
+                style={{
+                  padding: '0.5rem 1rem',
+                  background: 'transparent',
+                  border: '1px solid #374151',
+                  color: 'white',
+                  borderRadius: '0.375rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitEDL}
+                disabled={!edlIntent.trim()}
+                style={{
+                  padding: '0.5rem 1rem',
+                  background: '#059669',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.375rem',
+                  cursor: 'pointer',
+                  opacity: !edlIntent.trim() ? 0.5 : 1
+                }}
+              >
+                Generate EDL
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <EDLGenerationLoader
+        isOpen={showEDLLoader}
+        onClose={handleCloseEDLLoader}
+        userIntent={edlIntent}
+        scriptContent={scriptContent}
+        projectId={projectId}
+      />
     </div>
   );
 }
