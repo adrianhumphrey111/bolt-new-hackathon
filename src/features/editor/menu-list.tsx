@@ -1,7 +1,7 @@
 import useLayoutStore from "./store/use-layout-store";
-import { Icons } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { FiType, FiVideo, FiImage, FiMusic } from "react-icons/fi";
 
 export default function MenuList() {
   const { setActiveMenuItem, setShowMenuItem, activeMenuItem, showMenuItem } =
@@ -21,7 +21,7 @@ export default function MenuList() {
         variant={"ghost"}
         size={"icon"}
       >
-        <Icons.video width={16} />
+        <FiVideo className="h-4 w-4" />
       </Button>
 
       <Button
@@ -37,7 +37,7 @@ export default function MenuList() {
         variant={"ghost"}
         size={"icon"}
       >
-        <Icons.image width={16} />
+        <FiImage className="h-4 w-4" />
       </Button>
 
       <Button
@@ -53,7 +53,7 @@ export default function MenuList() {
         variant={"ghost"}
         size={"icon"}
       >
-        <Icons.type width={16} />
+        <FiType className="h-4 w-4" />
       </Button>
 
       <Button
@@ -69,7 +69,7 @@ export default function MenuList() {
         variant={"ghost"}
         size={"icon"}
       >
-        <Icons.audio width={16} />
+        <FiMusic className="h-4 w-4" />
       </Button>
     </div>
   );

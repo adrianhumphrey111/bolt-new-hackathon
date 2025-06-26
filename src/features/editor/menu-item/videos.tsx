@@ -10,6 +10,7 @@ import { useUserVideos } from "@/hooks/use-user-videos";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { FiUpload, FiVideo, FiPlayCircle } from "react-icons/fi";
 
 export const Videos = () => {
   const isDraggingOverTimeline = useIsDraggingOverTimeline();
@@ -126,7 +127,8 @@ export const Videos = () => {
         <div className="text-text-primary flex h-12 flex-none items-center px-4 text-sm font-medium">
           Videos
         </div>
-        <div className="flex flex-1 items-center justify-center px-4">
+        <div className="flex flex-1 flex-col items-center justify-center px-4 gap-4">
+          <FiUpload className="h-12 w-12 text-muted-foreground" />
           <div className="text-center">
             <p className="text-sm text-gray-500 mb-4">
               No videos found. Upload some videos to get started.
@@ -248,19 +250,26 @@ const UserVideoItem = ({
             )}
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-md flex items-center justify-center">
               <div className="bg-white/80 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <svg className="w-4 h-4 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                </svg>
+                <FiPlayCircle className="w-6 h-6 text-gray-700" />
               </div>
             </div>
           </div>
           <div className="w-full mt-1">
-            <p className="text-xs text-gray-600 truncate" title={userVideo.original_name}>
+            <p className="text-xs text-gray-600 dark:text-gray-400 truncate" title={userVideo.original_name}>
               {userVideo.original_name}
             </p>
+            {userVideo.duration && (
+              <p className="text-xs text-gray-500 dark:text-gray-500">
+                <FiClock className="inline mr-1" size={10} />
+                {Math.floor(userVideo.duration / 60)}:{(userVideo.duration % 60).toString().padStart(2, '0')}
+              </p>
+            )}
           </div>
         </div>
       </Draggable>
     </div>
   );
 };
+
+// Add missing FiClock import
+import { FiClock } from "react-icons/fi";

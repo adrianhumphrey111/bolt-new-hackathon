@@ -9,18 +9,12 @@ import {
 import { PLAYER_PAUSE, PLAYER_PLAY } from "../constants/events";
 import { frameToTimeString, getCurrentTime, timeToString } from "../utils/time";
 import useStore from "../store/use-store";
-import { SquareSplitHorizontal, Trash, ZoomIn, ZoomOut } from "lucide-react";
-import {
-  getFitZoomLevel,
-  getNextZoomLevel,
-  getPreviousZoomLevel,
-  getZoomByIndex,
-} from "../utils/timeline";
 import { useCurrentPlayerFrame } from "../hooks/use-current-frame";
 import { Slider } from "@/components/ui/slider";
 import { useEffect, useState } from "react";
 import useUpdateAnsestors from "../hooks/use-update-ansestors";
 import { ITimelineScaleState } from "@designcombo/types";
+import { FiTrash2, FiScissors, FiCopy, FiZoomIn, FiZoomOut, FiMaximize } from "react-icons/fi";
 
 const IconPlayerPlayFilled = ({ size }: { size: number }) => (
   <svg
@@ -167,7 +161,7 @@ const Header = () => {
               size={"sm"}
               className="flex items-center gap-1 px-2"
             >
-              <Trash size={14} /> Delete
+              <FiTrash2 size={14} /> Delete
             </Button>
 
             <Button
@@ -177,7 +171,7 @@ const Header = () => {
               size={"sm"}
               className="flex items-center gap-1 px-2"
             >
-              <SquareSplitHorizontal size={15} /> Split
+              <FiScissors size={15} /> Split
             </Button>
             <Button
               disabled={!activeIds.length}
@@ -188,7 +182,7 @@ const Header = () => {
               size={"sm"}
               className="flex items-center gap-1 px-2"
             >
-              <SquareSplitHorizontal size={15} /> Clone
+              <FiCopy size={15} /> Clone
             </Button>
           </div>
           <div className="flex items-center justify-center">
@@ -295,7 +289,7 @@ const ZoomControl = ({
     <div className="flex items-center justify-end">
       <div className="flex border-l border-border pl-4 pr-2">
         <Button size={"icon"} variant={"ghost"} onClick={onZoomOutClick}>
-          <ZoomOut size={16} />
+          <FiZoomOut size={16} />
         </Button>
         <Slider
           className="w-28"
@@ -312,19 +306,10 @@ const ZoomControl = ({
           }}
         />
         <Button size={"icon"} variant={"ghost"} onClick={onZoomInClick}>
-          <ZoomIn size={16} />
+          <FiZoomIn size={16} />
         </Button>
         <Button onClick={onZoomFitClick} variant={"ghost"} size={"icon"}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            viewBox="0 0 24 24"
-          >
-            <path
-              fill="currentColor"
-              d="M20 8V6h-2q-.425 0-.712-.288T17 5t.288-.712T18 4h2q.825 0 1.413.588T22 6v2q0 .425-.288.713T21 9t-.712-.288T20 8M2 8V6q0-.825.588-1.412T4 4h2q.425 0 .713.288T7 5t-.288.713T6 6H4v2q0 .425-.288.713T3 9t-.712-.288T2 8m18 12h-2q-.425 0-.712-.288T17 19t.288-.712T18 18h2v-2q0-.425.288-.712T21 15t.713.288T22 16v2q0 .825-.587 1.413T20 20M4 20q-.825 0-1.412-.587T2 18v-2q0-.425.288-.712T3 15t.713.288T4 16v2h2q.425 0 .713.288T7 19t-.288.713T6 20zm2-6v-4q0-.825.588-1.412T8 8h8q.825 0 1.413.588T18 10v4q0 .825-.587 1.413T16 16H8q-.825 0-1.412-.587T6 14"
-            />
-          </svg>
+          <FiMaximize size={16} />
         </Button>
       </div>
     </div>
@@ -332,3 +317,11 @@ const ZoomControl = ({
 };
 
 export default Header;
+
+// Import the necessary functions from the timeline utils
+import { 
+  getPreviousZoomLevel, 
+  getNextZoomLevel, 
+  getZoomByIndex, 
+  getFitZoomLevel 
+} from "../utils/timeline";

@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import useDataState from "../../store/use-data-state";
 import { dispatch } from "@designcombo/events";
 import { EDIT_OBJECT } from "@designcombo/state";
-import { ChevronDown, Search, Strikethrough, Underline, X } from "lucide-react";
+import { ChevronDown, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import Opacity from "./opacity";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,8 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ICompactFont, IFont } from "../../interfaces/editor";
 import Draggable from "react-draggable";
 import useLayoutStore from "../../store/use-layout-store";
+import { FiAlignCenter, FiAlignLeft, FiAlignRight, FiUnderline, FiType } from "react-icons/fi";
+import { RxStrikethrough, RxOverline } from "react-icons/rx";
 
 interface TextControlsProps {
   trackItem: ITrackItem & any;
@@ -385,27 +387,13 @@ const TextDecoration = ({
               value="underline"
               aria-label="Toggle left"
             >
-              <Underline size={18} />
+              <FiUnderline size={18} />
             </ToggleGroupItem>
             <ToggleGroupItem value="line-through" aria-label="Toggle italic">
-              <Strikethrough size={18} />
+              <RxStrikethrough size={18} />
             </ToggleGroupItem>
             <ToggleGroupItem value="overline" aria-label="Toggle strikethrough">
-              <div>
-                <svg
-                  width={18}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M5.59996 1.75977C5.43022 1.75977 5.26744 1.82719 5.14741 1.94722C5.02739 2.06724 4.95996 2.23003 4.95996 2.39977C4.95996 2.5695 5.02739 2.73229 5.14741 2.85231C5.26744 2.97234 5.43022 3.03977 5.59996 3.03977H18.4C18.5697 3.03977 18.7325 2.97234 18.8525 2.85231C18.9725 2.73229 19.04 2.5695 19.04 2.39977C19.04 2.23003 18.9725 2.06724 18.8525 1.94722C18.7325 1.82719 18.5697 1.75977 18.4 1.75977H5.59996ZM7.99996 6.79977C7.99996 6.58759 7.91568 6.38411 7.76565 6.23408C7.61562 6.08405 7.41213 5.99977 7.19996 5.99977C6.98779 5.99977 6.7843 6.08405 6.63428 6.23408C6.48425 6.38411 6.39996 6.58759 6.39996 6.79977V15.2798C6.39996 16.765 6.98996 18.1894 8.04016 19.2396C9.09037 20.2898 10.5147 20.8798 12 20.8798C13.4852 20.8798 14.9096 20.2898 15.9598 19.2396C17.01 18.1894 17.6 16.765 17.6 15.2798V6.79977C17.6 6.58759 17.5157 6.38411 17.3656 6.23408C17.2156 6.08405 17.0121 5.99977 16.8 5.99977C16.5878 5.99977 16.3843 6.08405 16.2343 6.23408C16.0842 6.38411 16 6.58759 16 6.79977V15.2798C16 16.3406 15.5785 17.358 14.8284 18.1082C14.0782 18.8583 13.0608 19.2798 12 19.2798C10.9391 19.2798 9.92168 18.8583 9.17153 18.1082C8.42139 17.358 7.99996 16.3406 7.99996 15.2798V6.79977Z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </div>
+              <RxOverline size={18} />
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
@@ -446,7 +434,10 @@ const Alignment = ({
                 className="flex h-8 w-full items-center justify-between text-sm"
                 variant="secondary"
               >
-                <div className="w-full overflow-hidden text-left">
+                <div className="w-full overflow-hidden text-left flex items-center">
+                  {localValue === "left" && <FiAlignLeft className="mr-2" size={14} />}
+                  {localValue === "center" && <FiAlignCenter className="mr-2" size={14} />}
+                  {localValue === "right" && <FiAlignRight className="mr-2" size={14} />}
                   <p className="truncate">{localValue}</p>
                 </div>
                 <ChevronDown className="text-muted-foreground" size={14} />
@@ -464,6 +455,9 @@ const Alignment = ({
                     className="flex h-8 cursor-pointer items-center px-4 text-sm text-zinc-200 hover:bg-zinc-800/50"
                     key={index}
                   >
+                    {option.value === "left" && <FiAlignLeft className="mr-2" size={14} />}
+                    {option.value === "center" && <FiAlignCenter className="mr-2" size={14} />}
+                    {option.value === "right" && <FiAlignRight className="mr-2" size={14} />}
                     {option.label}
                   </div>
                 );

@@ -7,6 +7,7 @@ import { generateId } from "@designcombo/timeline";
 import { IImage } from "@designcombo/types";
 import React from "react";
 import { useIsDraggingOverTimeline } from "../hooks/is-dragging-over-timeline";
+import { FiImage } from "react-icons/fi";
 
 export const Images = () => {
   const isDraggingOverTimeline = useIsDraggingOverTimeline();
@@ -40,16 +41,23 @@ export const Images = () => {
       </div>
       <ScrollArea className="h-[calc(100vh-58px-48px)]">
         <div className="grid grid-cols-2 gap-3 p-4 pb-20">
-          {IMAGES.map((image, index) => {
-            return (
-              <ImageItem
-                key={index}
-                image={image}
-                shouldDisplayPreview={!isDraggingOverTimeline}
-                handleAddImage={handleAddImage}
-              />
-            );
-          })}
+          {IMAGES.length > 0 ? (
+            IMAGES.map((image, index) => {
+              return (
+                <ImageItem
+                  key={index}
+                  image={image}
+                  shouldDisplayPreview={!isDraggingOverTimeline}
+                  handleAddImage={handleAddImage}
+                />
+              );
+            })
+          ) : (
+            <div className="col-span-2 flex flex-col items-center justify-center py-10 text-center">
+              <FiImage className="mb-3 h-10 w-10 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No images available</p>
+            </div>
+          )}
         </div>
       </ScrollArea>
     </div>
@@ -90,7 +98,7 @@ const ImageItem = ({
             },
           } as IImage)
         }
-        className="flex w-full cursor-pointer items-center justify-center overflow-hidden bg-background pb-2"
+        className="group relative flex w-full cursor-pointer items-center justify-center overflow-hidden bg-background pb-2"
       >
         <img
           draggable={false}
@@ -98,6 +106,11 @@ const ImageItem = ({
           className="h-full w-full rounded-md object-cover"
           alt="image"
         />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/10">
+          <div className="rounded-full bg-white/80 p-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <FiImage className="h-5 w-5 text-gray-700" />
+          </div>
+        </div>
       </div>
     </Draggable>
   );
